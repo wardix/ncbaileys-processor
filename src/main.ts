@@ -80,7 +80,7 @@ async function consumeMessages() {
         await new Promise((resolve) => setTimeout(resolve, backoffDelay))
         backoffDelay = Math.min(
           backoffDelay * 2,
-          Number(MAX_BACKOFF_DELAY_SECONDS),
+          Number(MAX_BACKOFF_DELAY_SECONDS) * 1000,
         )
         continue
       }
