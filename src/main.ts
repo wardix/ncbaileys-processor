@@ -6,7 +6,7 @@ import {
   MIN_BACKOFF_DELAY_SECONDS,
   NATS_SERVERS,
   NATS_TOKEN,
-  WABA_TEXT_MESSAGE_TEMPLATE,
+  WABA_MESSAGE_TEMPLATE,
   WABA_WEBHOOK_SECRET,
   WABA_WEBHOOK_URL,
 } from './config'
@@ -36,7 +36,6 @@ async function consumeMessages() {
       for await (const message of messages) {
         hasMessages = true
         const data = JSON.parse(sc.decode(message.data))
-        const wabaMessage = JSON.parse(WABA_TEXT_MESSAGE_TEMPLATE)
         for (const waMessage of data.messages) {
           console.log(JSON.stringify(waMessage, null, 2))
           if (waMessage.key.fromMe) {
@@ -45,30 +44,56 @@ async function consumeMessages() {
           if (!waMessage.key.remoteJid.endsWith('@s.whatsapp.net')) {
             continue
           }
+          if (
+            !('conversation' in waMessage) &&
+            !('imageMessage' in waMessage)
+          ) {
+            continue
+          }
           const waId = waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
+          const wabaMessage = JSON.parse(WABA_MESSAGE_TEMPLATE)
           wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
             waMessage.pushName
           wabaMessage.entry[0].changes[0].value.contacts[0].wa_id = waId
           wabaMessage.entry[0].changes[0].value.messages[0].from = waId
-          wabaMessage.entry[0].changes[0].value.messages[0].id = waMessage.key.id
-          wabaMessage.entry[0].changes[0].value.messages[0].timestamp =
-            `${waMessage.messageTimestamp}`
-          wabaMessage.entry[0].changes[0].value.messages[0].text.body =
-            waMessage.message.conversation
+          wabaMessage.entry[0].changes[0].value.messages[0].id =
+            waMessage.key.id
+          wabaMessage.entry[0].changes[0].value.messages[0].timestamp = `${waMessage.messageTimestamp}`
+          if ('conversation' in waMessage) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'text'
+            wabaMessage.entry[0].changes[0].value.messages[0].text = {
+              body: waMessage.message.conversation,
+            }
+          } else if ('imageMessage' in waMessage) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'image'
+            wabaMessage.entry[0].changes[0].value.messages[0].image = {
+              mime_type: waMessage.message.imageMessage.mimetype,
+              sha256: waMessage.message.imageMessage.fileSha256,
+              id: 'generate-random-id',
+            }
+            if (waMessage.message.imageMessage.caption) {
+              wabaMessage.entry[0].changes[0].value.messages[0].image.caption =
+                waMessage.message.imageMessage.caption
+            }
+          }
           const postData = JSON.stringify(wabaMessage)
-          const sha1Signature = crypto.createHmac('sha1', WABA_WEBHOOK_SECRET).update(postData).digest('hex')
+          const sha1Signature = crypto
+            .createHmac('sha1', WABA_WEBHOOK_SECRET)
+            .update(postData)
+            .digest('hex')
           const signature = `sha1=${sha1Signature}`
+
           console.log(signature)
           console.log(postData)
           try {
             const response = await axios.post(WABA_WEBHOOK_URL, postData, {
               headers: {
                 'Content-Type': 'application/json',
-                'X-Hub-Signature': signature
-              }
+                'X-Hub-Signature': signature,
+              },
             })
             console.log(response.data)
-          } catch(error) {
+          } catch (error) {
             console.error('Error', error)
           }
         }
