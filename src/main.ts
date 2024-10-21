@@ -45,9 +45,10 @@ async function consumeMessages() {
             continue
           }
           if (
-            !('conversation' in waMessage) &&
-            !('imageMessage' in waMessage)
+            !('conversation' in waMessage.message) &&
+            !('imageMessage' in waMessage.message)
           ) {
+	    console.log('not text message or image message')
             continue
           }
           const waId = waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
@@ -59,17 +60,17 @@ async function consumeMessages() {
           wabaMessage.entry[0].changes[0].value.messages[0].id =
             waMessage.key.id
           wabaMessage.entry[0].changes[0].value.messages[0].timestamp = `${waMessage.messageTimestamp}`
-          if ('conversation' in waMessage) {
+          if ('conversation' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'text'
             wabaMessage.entry[0].changes[0].value.messages[0].text = {
               body: waMessage.message.conversation,
             }
-          } else if ('imageMessage' in waMessage) {
+          } else if ('imageMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'image'
             wabaMessage.entry[0].changes[0].value.messages[0].image = {
               mime_type: waMessage.message.imageMessage.mimetype,
               sha256: waMessage.message.imageMessage.fileSha256,
-              id: 'generate-random-id',
+              id: waMessage.message.imageMessage.id,
             }
             if (waMessage.message.imageMessage.caption) {
               wabaMessage.entry[0].changes[0].value.messages[0].image.caption =
