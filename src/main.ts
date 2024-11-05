@@ -46,9 +46,10 @@ async function consumeMessages() {
           }
           if (
             !('conversation' in waMessage.message) &&
-            !('imageMessage' in waMessage.message)
+            !('imageMessage' in waMessage.message) &&
+            !('videoMessage' in waMessage.message)
           ) {
-	    console.log('not text message or image message')
+            console.log('unknown message')
             continue
           }
           const waId = waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
@@ -75,6 +76,17 @@ async function consumeMessages() {
             if (waMessage.message.imageMessage.caption) {
               wabaMessage.entry[0].changes[0].value.messages[0].image.caption =
                 waMessage.message.imageMessage.caption
+            }
+          } else if ('videoMessage' in waMessage.message) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'video'
+            wabaMessage.entry[0].changes[0].value.messages[0].video = {
+              mime_type: waMessage.message.videoMessage.mimetype,
+              sha256: waMessage.message.videoMessage.fileSha256,
+              id: waMessage.message.videoMessage.id,
+            }
+            if (waMessage.message.videoMessage.caption) {
+              wabaMessage.entry[0].changes[0].value.messages[0].video.caption =
+                waMessage.message.videoMessage.caption
             }
           }
           const postData = JSON.stringify(wabaMessage)
