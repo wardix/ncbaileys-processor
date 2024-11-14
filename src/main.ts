@@ -100,6 +100,9 @@ async function consumeMessages() {
                   .documentMessage.fileSha256,
               id: waMessage.message.documentWithCaptionMessage.message
                 .documentMessage.id,
+              filename:
+                waMessage.message.documentWithCaptionMessage.message
+                  .documentMessage.fileName,
             }
             if (
               waMessage.message.documentWithCaptionMessage.message
