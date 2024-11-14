@@ -47,7 +47,8 @@ async function consumeMessages() {
           if (
             !('conversation' in waMessage.message) &&
             !('imageMessage' in waMessage.message) &&
-            !('videoMessage' in waMessage.message)
+            !('videoMessage' in waMessage.message) &&
+            !('documentWithCaptionMessage' in waMessage.message)
           ) {
             console.log('unknown message')
             continue
@@ -87,6 +88,25 @@ async function consumeMessages() {
             if (waMessage.message.videoMessage.caption) {
               wabaMessage.entry[0].changes[0].value.messages[0].video.caption =
                 waMessage.message.videoMessage.caption
+            }
+          } else if ('documentWithCaptionMessage' in waMessage.message) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'document'
+            wabaMessage.entry[0].changes[0].value.messages[0].document = {
+              mime_type:
+                waMessage.message.documentWithCaptionMessage.message
+                  .documentMessage.mimetype,
+              sha256:
+                waMessage.message.documentWithCaptionMessage.message
+                  .documentMessage.fileSha256,
+              id: waMessage.message.documentWithCaptionMessage.message
+                .documentMessage.id,
+            }
+            if (
+              waMessage.message.documentWithCaptionMessage.message
+                .documentMessage.caption
+            ) {
+              wabaMessage.entry[0].changes[0].value.messages[0].document.caption =
+                waMessage.message.documentWithCaptionMessage.message.documentMessage.caption
             }
           }
           const postData = JSON.stringify(wabaMessage)
