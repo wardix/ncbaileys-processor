@@ -7,8 +7,7 @@ import {
   NATS_SERVERS,
   NATS_TOKEN,
   WABA_MESSAGE_TEMPLATE,
-  WABA_WEBHOOK_SECRET,
-  WABA_WEBHOOK_URL,
+  WABA_WEBHOOK_CONFIG,
 } from './config'
 
 const sc = StringCodec()
@@ -28,6 +27,7 @@ async function consumeMessages() {
 
   const js = nc.jetstream()
   const c = await js.consumers.get('EVENTS', 'ncbaileys_processor')
+  const webhook = JSON.parse(WABA_WEBHOOK_CONFIG)
 
   try {
     while (true) {
@@ -35,6 +35,15 @@ async function consumeMessages() {
       let hasMessages = false
       for await (const message of messages) {
         hasMessages = true
+        const [_event, _keyword, account] = message.subject.split('.')
+        const { url: webhookUrl, secret: webhookSecret } = webhook[account]
+          ? webhook[account]
+          : webhook?.default
+            ? webhook.default
+            : { url: null, secret: null }
+        if (!webhookUrl) {
+          continue
+        }
         const data = JSON.parse(sc.decode(message.data))
         for (const waMessage of data.messages) {
           console.log(JSON.stringify(waMessage, null, 2))
@@ -114,7 +123,7 @@ async function consumeMessages() {
           }
           const postData = JSON.stringify(wabaMessage)
           const sha1Signature = crypto
-            .createHmac('sha1', WABA_WEBHOOK_SECRET)
+            .createHmac('sha1', webhookSecret)
             .update(postData)
             .digest('hex')
           const signature = `sha1=${sha1Signature}`
@@ -122,7 +131,7 @@ async function consumeMessages() {
           console.log(signature)
           console.log(postData)
           try {
-            const response = await axios.post(WABA_WEBHOOK_URL, postData, {
+            const response = await axios.post(webhookUrl, postData, {
               headers: {
                 'Content-Type': 'application/json',
                 'X-Hub-Signature': signature,
