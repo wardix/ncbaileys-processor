@@ -55,6 +55,7 @@ async function consumeMessages() {
           }
           if (
             !('conversation' in waMessage.message) &&
+            !('locationMessage' in waMessage.message) &&
             !('imageMessage' in waMessage.message) &&
             !('videoMessage' in waMessage.message) &&
             !('documentWithCaptionMessage' in waMessage.message)
@@ -79,6 +80,14 @@ async function consumeMessages() {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'text'
             wabaMessage.entry[0].changes[0].value.messages[0].text = {
               body: waMessage.message.conversation,
+            }
+          } else if ('locationMessage' in waMessage.message) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'location'
+            wabaMessage.entry[0].changes[0].value.messages[0].location = {
+              latitude: waMessage.message.locationMessage.degreesLatitude,
+              longitude: waMessage.message.locationMessage.degreesLongitude,
+              name: waMessage.message.locationMessage.name,
+              address: waMessage.message.locationMessage.address,
             }
           } else if ('imageMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'image'
