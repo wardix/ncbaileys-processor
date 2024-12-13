@@ -64,6 +64,10 @@ async function consumeMessages() {
           }
           const waId = waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
           const wabaMessage = JSON.parse(WABA_MESSAGE_TEMPLATE)
+          wabaMessage.entry[0].id = account
+          wabaMessage.entry[0].changes[0].metadata.display_phone_number =
+            account
+          wabaMessage.entry[0].changes[0].metadata.phone_number_id = account
           wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
             waMessage.pushName
           wabaMessage.entry[0].changes[0].value.contacts[0].wa_id = waId
