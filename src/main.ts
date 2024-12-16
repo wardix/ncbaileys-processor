@@ -55,6 +55,7 @@ async function consumeMessages() {
           }
           if (
             !('conversation' in waMessage.message) &&
+            !('extendedTextMessage' in waMessage.message) &&
             !('locationMessage' in waMessage.message) &&
             !('imageMessage' in waMessage.message) &&
             !('videoMessage' in waMessage.message) &&
@@ -81,6 +82,11 @@ async function consumeMessages() {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'text'
             wabaMessage.entry[0].changes[0].value.messages[0].text = {
               body: waMessage.message.conversation,
+            }
+          } else if ('extendedTextMessage' in waMessage.message) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'text'
+            wabaMessage.entry[0].changes[0].value.messages[0].text = {
+              body: waMessage.message.extendedTextMessage.text,
             }
           } else if ('locationMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'location'
