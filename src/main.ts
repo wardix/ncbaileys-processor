@@ -53,6 +53,9 @@ async function consumeMessages() {
           if (!waMessage.key.remoteJid.endsWith('@s.whatsapp.net')) {
             continue
           }
+          if (!('message' in waMessage)) {
+            continue
+          }
           if (
             !('conversation' in waMessage.message) &&
             !('extendedTextMessage' in waMessage.message) &&
