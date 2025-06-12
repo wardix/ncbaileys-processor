@@ -91,6 +91,14 @@ async function consumeMessages() {
             wabaMessage.entry[0].changes[0].value.messages[0].text = {
               body: waMessage.message.extendedTextMessage.text,
             }
+            if ('contextInfo' in waMessage.message.extendedTextMessage) {
+              const { stanzaId, participant } =
+                waMessage.message.extendedTextMessage.contextInfo
+              wabaMessage.entry[0].changes[0].value.messages[0].context = {
+                from: participant.split('@')[0],
+                id: stanzaId,
+              }
+            }
           } else if ('locationMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'location'
             wabaMessage.entry[0].changes[0].value.messages[0].location = {
