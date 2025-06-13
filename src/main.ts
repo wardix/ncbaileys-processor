@@ -75,6 +75,11 @@ async function consumeMessages() {
             if (!(account in archiveWebhook)) {
               continue
             }
+            archiveMessage.id = waMessage.key.id
+            archiveMessage.to = waMessage.key.remoteJid.replace(
+              '@s.whatsapp.net',
+              '',
+            )
             const { url, params, headers } = archiveWebhook[account]
             headers['Content-Type'] = 'application/json'
 
