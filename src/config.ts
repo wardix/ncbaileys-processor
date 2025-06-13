@@ -6,3 +6,6 @@ export const MIN_BACKOFF_DELAY_SECONDS =
   process.env.MIN_BACKOFF_DELAY_SECONDS || 1
 export const WABA_MESSAGE_TEMPLATE = process.env.WABA_MESSAGE_TEMPLATE || ''
 export const WABA_WEBHOOK_CONFIG = process.env.WABA_WEBHOOK_CONFIG || '{}'
+export const ARCHIVE_WEBHOOK_CONFIG = process.env.ARCHIVE_WEBHOOK_CONFIG || '{}'
+export const ARCHIVE_MESSAGE_TEMPLATE =
+  process.env.ARCHIVE_MESSAGE_TEMPLATE || ''

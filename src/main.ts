@@ -2,6 +2,8 @@ import { connect, StringCodec } from 'nats'
 import crypto from 'crypto'
 import axios from 'axios'
 import {
+  ARCHIVE_MESSAGE_TEMPLATE,
+  ARCHIVE_WEBHOOK_CONFIG,
   MAX_BACKOFF_DELAY_SECONDS,
   MIN_BACKOFF_DELAY_SECONDS,
   NATS_SERVERS,
@@ -47,7 +49,7 @@ async function consumeMessages() {
         const data = JSON.parse(sc.decode(message.data))
         for (const waMessage of data.messages) {
           console.log(JSON.stringify(waMessage, null, 2))
-          if (waMessage.key.fromMe) {
+          if (waMessage.key.fromMe && waMessage.status === 'PENDING') {
             continue
           }
           if (!waMessage.key.remoteJid.endsWith('@s.whatsapp.net')) {
@@ -65,6 +67,39 @@ async function consumeMessages() {
             !('documentWithCaptionMessage' in waMessage.message)
           ) {
             console.log('unknown message')
+            continue
+          }
+          if (waMessage.key.fromMe) {
+            const archiveWebhook = JSON.parse(ARCHIVE_WEBHOOK_CONFIG)
+            const archiveMessage = JSON.parse(ARCHIVE_MESSAGE_TEMPLATE)
+            if (!(account in archiveWebhook)) {
+              continue
+            }
+            const { url, params, headers } = archiveWebhook[account]
+            headers['Content-Type'] = 'application/json'
+
+            if ('conversation' in waMessage.message) {
+              ;(archiveMessage.type = 'text'),
+                (archiveMessage.text = {
+                  preview_url: false,
+                  body: waMessage.message.conversation,
+                })
+            } else if ('extendedTextMessage' in waMessage.message) {
+              ;(archiveMessage.type = 'text'),
+                (archiveMessage.text = {
+                  preview_url: false,
+                  body: waMessage.message.extendedTextMessage.text,
+                })
+              if ('contextInfo' in waMessage.message.extendedTextMessage) {
+                const { stanzaId, participant } =
+                  waMessage.message.extendedTextMessage.contextInfo
+                archiveMessage.context = {
+                  from: participant.replace('@s.whatsapp.net', ''),
+                  id: stanzaId,
+                }
+              }
+            }
+            await axios.post(url, archiveMessage, { params, headers })
             continue
           }
           const waId = waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
@@ -95,7 +130,7 @@ async function consumeMessages() {
               const { stanzaId, participant } =
                 waMessage.message.extendedTextMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.split('@')[0],
+                from: participant.replace('@s.whatsapp.net'),
                 id: stanzaId,
               }
             }
