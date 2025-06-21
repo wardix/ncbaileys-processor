@@ -48,11 +48,10 @@ async function consumeMessages() {
         }
         const data = JSON.parse(sc.decode(message.data))
         for (const waMessage of data.messages) {
+          const isGroupConversation =
+            !waMessage.key.remoteJid.endsWith('@s.whatsapp.net')
           console.log(JSON.stringify(waMessage, null, 2))
           if (waMessage.key.fromMe && waMessage.status === 'PENDING') {
-            continue
-          }
-          if (!waMessage.key.remoteJid.endsWith('@s.whatsapp.net')) {
             continue
           }
           if (!('message' in waMessage)) {
@@ -69,6 +68,9 @@ async function consumeMessages() {
             console.log('unknown message')
             continue
           }
+          const waId = !isGroupConversation
+            ? waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
+            : waMessage.key.remoteJid
           if (waMessage.key.fromMe) {
             const archiveWebhook = JSON.parse(ARCHIVE_WEBHOOK_CONFIG)
             const archiveMessage = JSON.parse(ARCHIVE_MESSAGE_TEMPLATE)
@@ -76,10 +78,7 @@ async function consumeMessages() {
               continue
             }
             archiveMessage.id = waMessage.key.id
-            archiveMessage.to = waMessage.key.remoteJid.replace(
-              '@s.whatsapp.net',
-              '',
-            )
+            archiveMessage.to = waId
             const { url, params, headers } = archiveWebhook[account]
             headers['Content-Type'] = 'application/json'
 
@@ -107,15 +106,23 @@ async function consumeMessages() {
             await axios.post(url, archiveMessage, { params, headers })
             continue
           }
-          const waId = waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
           const wabaMessage = JSON.parse(WABA_MESSAGE_TEMPLATE)
           wabaMessage.entry[0].id = account
           wabaMessage.entry[0].changes[0].value.metadata.display_phone_number =
             account
           wabaMessage.entry[0].changes[0].value.metadata.phone_number_id =
             account
-          wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
-            waMessage.pushName
+          if (isGroupConversation) {
+            wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
+              waMessage.key.subject
+            wabaMessage.entry[0].changes[0].value.contacts[0]['participant'] = {
+              name: waMessage.pushName,
+              wa_id: waMessage.key.participant.replace('@s.whatsapp.net', ''),
+            }
+          } else {
+            wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
+              waMessage.pushName
+          }
           wabaMessage.entry[0].changes[0].value.contacts[0].wa_id = waId
           wabaMessage.entry[0].changes[0].value.messages[0].from = waId
           wabaMessage.entry[0].changes[0].value.messages[0].id =
