@@ -154,6 +154,14 @@ async function consumeMessages() {
               name: waMessage.message.locationMessage.name,
               address: waMessage.message.locationMessage.address,
             }
+            if ('contextInfo' in waMessage.message.locationMessage) {
+              const { stanzaId, participant } =
+                waMessage.message.locationMessage.contextInfo
+              wabaMessage.entry[0].changes[0].value.messages[0].context = {
+                from: participant.replace('@s.whatsapp.net'),
+                id: stanzaId,
+              }
+            }
           } else if ('imageMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'image'
             wabaMessage.entry[0].changes[0].value.messages[0].image = {
@@ -165,6 +173,14 @@ async function consumeMessages() {
               wabaMessage.entry[0].changes[0].value.messages[0].image.caption =
                 waMessage.message.imageMessage.caption
             }
+            if ('contextInfo' in waMessage.message.imageMessage) {
+              const { stanzaId, participant } =
+                waMessage.message.imageMessage.contextInfo
+              wabaMessage.entry[0].changes[0].value.messages[0].context = {
+                from: participant.replace('@s.whatsapp.net'),
+                id: stanzaId,
+              }
+            }
           } else if ('videoMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'video'
             wabaMessage.entry[0].changes[0].value.messages[0].video = {
@@ -175,6 +191,14 @@ async function consumeMessages() {
             if (waMessage.message.videoMessage.caption) {
               wabaMessage.entry[0].changes[0].value.messages[0].video.caption =
                 waMessage.message.videoMessage.caption
+            }
+            if ('contextInfo' in waMessage.message.videoMessage) {
+              const { stanzaId, participant } =
+                waMessage.message.videoMessage.contextInfo
+              wabaMessage.entry[0].changes[0].value.messages[0].context = {
+                from: participant.replace('@s.whatsapp.net'),
+                id: stanzaId,
+              }
             }
           } else if ('documentWithCaptionMessage' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'document'
@@ -197,6 +221,14 @@ async function consumeMessages() {
             ) {
               wabaMessage.entry[0].changes[0].value.messages[0].document.caption =
                 waMessage.message.documentWithCaptionMessage.message.documentMessage.caption
+            }
+            if ('contextInfo' in waMessage.message.documentWithCaptionMessage) {
+              const { stanzaId, participant } =
+                waMessage.message.documentWithCaptionMessage.contextInfo
+              wabaMessage.entry[0].changes[0].value.messages[0].context = {
+                from: participant.replace('@s.whatsapp.net'),
+                id: stanzaId,
+              }
             }
           }
           const postData = JSON.stringify(wabaMessage)
