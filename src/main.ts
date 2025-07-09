@@ -54,7 +54,7 @@ async function consumeMessages() {
           if (waMessage.key.fromMe && waMessage.status === 'PENDING') {
             continue
           }
-         if (waMessage.key.remoteJid == 'status@broadcast') {
+          if (waMessage.key.remoteJid == 'status@broadcast') {
             continue
           }
           if (!('message' in waMessage)) {
@@ -120,7 +120,9 @@ async function consumeMessages() {
               waMessage.key.subject
             wabaMessage.entry[0].changes[0].value.contacts[0]['participant'] = {
               name: waMessage.pushName,
-              wa_id: (waMessage.key.participant) ? waMessage.key.participant.replace('@s.whatsapp.net', '') : waMessage.participant.replace('@s.whatsapp.net', ''),
+              wa_id: waMessage.key.participant
+                ? waMessage.key.participant.replace('@s.whatsapp.net', '')
+                : waMessage.participant.replace('@s.whatsapp.net', ''),
             }
           } else {
             wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
