@@ -97,7 +97,10 @@ async function consumeMessages() {
                   preview_url: false,
                   body: waMessage.message.extendedTextMessage.text,
                 })
-              if ('contextInfo' in waMessage.message.extendedTextMessage) {
+              if (
+                'contextInfo' in waMessage.message.extendedTextMessage &&
+                'stanzaId' in waMessage.message.extendedTextMessage.contextInfo
+              ) {
                 const { stanzaId, participant } =
                   waMessage.message.extendedTextMessage.contextInfo
                 archiveMessage.context = {
@@ -143,7 +146,10 @@ async function consumeMessages() {
             wabaMessage.entry[0].changes[0].value.messages[0].text = {
               body: waMessage.message.extendedTextMessage.text,
             }
-            if ('contextInfo' in waMessage.message.extendedTextMessage) {
+            if (
+              'contextInfo' in waMessage.message.extendedTextMessage &&
+              'stanzaId' in waMessage.message.extendedTextMessage.contextInfo
+            ) {
               const { stanzaId, participant } =
                 waMessage.message.extendedTextMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
@@ -159,7 +165,10 @@ async function consumeMessages() {
               name: waMessage.message.locationMessage.name,
               address: waMessage.message.locationMessage.address,
             }
-            if ('contextInfo' in waMessage.message.locationMessage) {
+            if (
+              'contextInfo' in waMessage.message.locationMessage &&
+              'stanzaId' in waMessage.message.locationMessage.contextInfo
+            ) {
               const { stanzaId, participant } =
                 waMessage.message.locationMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
@@ -178,7 +187,10 @@ async function consumeMessages() {
               wabaMessage.entry[0].changes[0].value.messages[0].image.caption =
                 waMessage.message.imageMessage.caption
             }
-            if ('contextInfo' in waMessage.message.imageMessage) {
+            if (
+              'contextInfo' in waMessage.message.imageMessage &&
+              'stanzaId' in waMessage.message.imageMessage.contextInfo
+            ) {
               const { stanzaId, participant } =
                 waMessage.message.imageMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
@@ -197,7 +209,10 @@ async function consumeMessages() {
               wabaMessage.entry[0].changes[0].value.messages[0].video.caption =
                 waMessage.message.videoMessage.caption
             }
-            if ('contextInfo' in waMessage.message.videoMessage) {
+            if (
+              'contextInfo' in waMessage.message.videoMessage &&
+              'stanzaId' in waMessage.message.videoMessage.contextInfo
+            ) {
               const { stanzaId, participant } =
                 waMessage.message.videoMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
@@ -227,7 +242,11 @@ async function consumeMessages() {
               wabaMessage.entry[0].changes[0].value.messages[0].document.caption =
                 waMessage.message.documentWithCaptionMessage.message.documentMessage.caption
             }
-            if ('contextInfo' in waMessage.message.documentWithCaptionMessage) {
+            if (
+              'contextInfo' in waMessage.message.documentWithCaptionMessage &&
+              'stanzaId' in
+                waMessage.message.documentWithCaptionMessage.contextInfo
+            ) {
               const { stanzaId, participant } =
                 waMessage.message.documentWithCaptionMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
