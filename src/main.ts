@@ -86,17 +86,17 @@ async function consumeMessages() {
             headers['Content-Type'] = 'application/json'
 
             if ('conversation' in waMessage.message) {
-              ;(archiveMessage.type = 'text'),
-                (archiveMessage.text = {
-                  preview_url: false,
-                  body: waMessage.message.conversation,
-                })
+              archiveMessage.type = 'text'
+              archiveMessage.text = {
+                preview_url: false,
+                body: waMessage.message.conversation,
+              }
             } else if ('extendedTextMessage' in waMessage.message) {
-              ;(archiveMessage.type = 'text'),
-                (archiveMessage.text = {
-                  preview_url: false,
-                  body: waMessage.message.extendedTextMessage.text,
-                })
+              archiveMessage.type = 'text'
+              archiveMessage.text = {
+                preview_url: false,
+                body: waMessage.message.extendedTextMessage.text,
+              }
               if (
                 'contextInfo' in waMessage.message.extendedTextMessage &&
                 'stanzaId' in waMessage.message.extendedTextMessage.contextInfo
@@ -105,6 +105,103 @@ async function consumeMessages() {
                   waMessage.message.extendedTextMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net', ''),
+                  id: stanzaId,
+                }
+              }
+            } else if ('locationMessage' in waMessage.message) {
+              archiveMessage.type = 'location'
+              archiveMessage.location = {
+                latitude: waMessage.message.locationMessage.degreesLatitude,
+                longitude: waMessage.message.locationMessage.degreesLongitude,
+                name: waMessage.message.locationMessage.name,
+                address: waMessage.message.locationMessage.address,
+              }
+              if (
+                'contextInfo' in waMessage.message.locationMessage &&
+                'stanzaId' in waMessage.message.locationMessage.contextInfo
+              ) {
+                const { stanzaId, participant } =
+                  waMessage.message.locationMessage.contextInfo
+                archiveMessage.context = {
+                  from: participant.replace('@s.whatsapp.net'),
+                  id: stanzaId,
+                }
+              }
+            } else if ('imageMessage' in waMessage.message) {
+              archiveMessage.type = 'image'
+              archiveMessage.image = {
+                mime_type: waMessage.message.imageMessage.mimetype,
+                sha256: waMessage.message.imageMessage.fileSha256,
+                id: waMessage.message.imageMessage.id,
+              }
+              if (waMessage.message.imageMessage.caption) {
+                archiveMessage.image.caption =
+                  waMessage.message.imageMessage.caption
+              }
+              if (
+                'contextInfo' in waMessage.message.imageMessage &&
+                'stanzaId' in waMessage.message.imageMessage.contextInfo
+              ) {
+                const { stanzaId, participant } =
+                  waMessage.message.imageMessage.contextInfo
+                archiveMessage.context = {
+                  from: participant.replace('@s.whatsapp.net'),
+                  id: stanzaId,
+                }
+              }
+            } else if ('videoMessage' in waMessage.message) {
+              archiveMessage.type = 'video'
+              archiveMessage.video = {
+                mime_type: waMessage.message.videoMessage.mimetype,
+                sha256: waMessage.message.videoMessage.fileSha256,
+                id: waMessage.message.videoMessage.id,
+              }
+              if (waMessage.message.videoMessage.caption) {
+                archiveMessage.video.caption =
+                  waMessage.message.videoMessage.caption
+              }
+              if (
+                'contextInfo' in waMessage.message.videoMessage &&
+                'stanzaId' in waMessage.message.videoMessage.contextInfo
+              ) {
+                const { stanzaId, participant } =
+                  waMessage.message.videoMessage.contextInfo
+                archiveMessage.context = {
+                  from: participant.replace('@s.whatsapp.net'),
+                  id: stanzaId,
+                }
+              }
+            } else if ('documentWithCaptionMessage' in waMessage.message) {
+              archiveMessage.type = 'document'
+              archiveMessage.document = {
+                mime_type:
+                  waMessage.message.documentWithCaptionMessage.message
+                    .documentMessage.mimetype,
+                sha256:
+                  waMessage.message.documentWithCaptionMessage.message
+                    .documentMessage.fileSha256,
+                id: waMessage.message.documentWithCaptionMessage.message
+                  .documentMessage.id,
+                filename:
+                  waMessage.message.documentWithCaptionMessage.message
+                    .documentMessage.fileName,
+              }
+              if (
+                waMessage.message.documentWithCaptionMessage.message
+                  .documentMessage.caption
+              ) {
+                archiveMessage.document.caption =
+                  waMessage.message.documentWithCaptionMessage.message.documentMessage.caption
+              }
+              if (
+                'contextInfo' in waMessage.message.documentWithCaptionMessage &&
+                'stanzaId' in
+                  waMessage.message.documentWithCaptionMessage.contextInfo
+              ) {
+                const { stanzaId, participant } =
+                  waMessage.message.documentWithCaptionMessage.contextInfo
+                archiveMessage.context = {
+                  from: participant.replace('@s.whatsapp.net'),
                   id: stanzaId,
                 }
               }
