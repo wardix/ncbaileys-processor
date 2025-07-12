@@ -105,7 +105,7 @@ async function consumeMessages() {
                   waMessage.message.extendedTextMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net', ''),
-                  id: stanzaId,
+                  message_id: stanzaId,
                 }
               }
             } else if ('locationMessage' in waMessage.message) {
@@ -124,7 +124,7 @@ async function consumeMessages() {
                   waMessage.message.locationMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net'),
-                  id: stanzaId,
+                  message_id: stanzaId,
                 }
               }
             } else if ('imageMessage' in waMessage.message) {
@@ -146,7 +146,7 @@ async function consumeMessages() {
                   waMessage.message.imageMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net'),
-                  id: stanzaId,
+                  message_id: stanzaId,
                 }
               }
             } else if ('videoMessage' in waMessage.message) {
@@ -168,7 +168,7 @@ async function consumeMessages() {
                   waMessage.message.videoMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net'),
-                  id: stanzaId,
+                  message_id: stanzaId,
                 }
               }
             } else if ('documentWithCaptionMessage' in waMessage.message) {
@@ -202,7 +202,7 @@ async function consumeMessages() {
                   waMessage.message.documentWithCaptionMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net'),
-                  id: stanzaId,
+                  message_id: stanzaId,
                 }
               }
             }
