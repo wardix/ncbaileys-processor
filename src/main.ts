@@ -1,6 +1,7 @@
 import { connect, StringCodec } from 'nats'
 import crypto from 'crypto'
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import { parseVCards } from 'vcard4-ts'
 import {
   ARCHIVE_MESSAGE_TEMPLATE,
   ARCHIVE_WEBHOOK_CONFIG,
@@ -64,6 +65,7 @@ async function consumeMessages() {
             !('conversation' in waMessage.message) &&
             !('extendedTextMessage' in waMessage.message) &&
             !('locationMessage' in waMessage.message) &&
+            !('contactMessage' in waMessage.message) &&
             !('imageMessage' in waMessage.message) &&
             !('videoMessage' in waMessage.message) &&
             !('documentWithCaptionMessage' in waMessage.message)
@@ -122,6 +124,37 @@ async function consumeMessages() {
               ) {
                 const { stanzaId, participant } =
                   waMessage.message.locationMessage.contextInfo
+                archiveMessage.context = {
+                  from: participant.replace('@s.whatsapp.net'),
+                  message_id: stanzaId,
+                }
+              }
+            } else if ('contactMessage' in waMessage.message) {
+              archiveMessage.type = 'contacts'
+              const cards = parseVCards(
+                waMessage.message.contactMessage.vcard,
+              ) as any
+              archiveMessage.contacts = [
+                {
+                  name: {
+                    formatted_name: cards.vCards[0].FN[0].value,
+                    first_name: cards.vCards[0].N.value.givenNames[0],
+                  },
+                  phones: [
+                    {
+                      phone: cards.vCards[0].TEL[0].value,
+                      type: cards.vCards[0].TEL[0].parameters.TYPE[0],
+                      wa_id: cards.vCards[0].TEL[0].parameters.x.WAID[0],
+                    },
+                  ],
+                },
+              ]
+              if (
+                'contextInfo' in waMessage.message.contactMessage &&
+                'stanzaId' in waMessage.message.contactMessage.contextInfo
+              ) {
+                const { stanzaId, participant } =
+                  waMessage.message.contactMessage.contextInfo
                 archiveMessage.context = {
                   from: participant.replace('@s.whatsapp.net'),
                   message_id: stanzaId,
@@ -268,6 +301,37 @@ async function consumeMessages() {
             ) {
               const { stanzaId, participant } =
                 waMessage.message.locationMessage.contextInfo
+              wabaMessage.entry[0].changes[0].value.messages[0].context = {
+                from: participant.replace('@s.whatsapp.net'),
+                id: stanzaId,
+              }
+            }
+          } else if ('contactMessage' in waMessage.message) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'contacts'
+            const cards = parseVCards(
+              waMessage.message.contactMessage.vcard,
+            ) as any
+            wabaMessage.entry[0].changes[0].value.messages[0].contacts = [
+              {
+                name: {
+                  formatted_name: cards.vCards[0].FN[0].value,
+                  first_name: cards.vCards[0].N.value.givenNames[0],
+                },
+                phones: [
+                  {
+                    phone: cards.vCards[0].TEL[0].value,
+                    type: cards.vCards[0].TEL[0].parameters.TYPE[0],
+                    wa_id: cards.vCards[0].TEL[0].parameters.x.WAID[0],
+                  },
+                ],
+              },
+            ]
+            if (
+              'contextInfo' in waMessage.message.contactMessage &&
+              'stanzaId' in waMessage.message.contactMessage.contextInfo
+            ) {
+              const { stanzaId, participant } =
+                waMessage.message.contactMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
                 from: participant.replace('@s.whatsapp.net'),
                 id: stanzaId,
