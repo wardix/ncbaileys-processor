@@ -49,9 +49,6 @@ async function consumeMessages() {
         }
         const data = JSON.parse(sc.decode(message.data))
         for (const waMessage of data.messages) {
-          const isGroupConversation =
-            !waMessage.key.remoteJid.endsWith('@s.whatsapp.net')
-          console.log(JSON.stringify(waMessage, null, 2))
           if (waMessage.key.fromMe && waMessage.status === 'PENDING') {
             continue
           }
@@ -64,6 +61,11 @@ async function consumeMessages() {
           if (!waMessage.message) {
             continue
           }
+
+          console.log(JSON.stringify(waMessage, null, 2))
+
+          const isGroupConversation = waMessage.key.remoteJid.endsWith('@g.us')
+
           if (
             !('conversation' in waMessage.message) &&
             !('extendedTextMessage' in waMessage.message) &&
@@ -77,7 +79,9 @@ async function consumeMessages() {
             continue
           }
           const waId = !isGroupConversation
-            ? waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
+            ? waMessage.key.remoteJid.endsWith('@s.whatsapp.net')
+              ? waMessage.key.remoteJid.replace('@s.whatsapp.net', '')
+              : waMessage.key.remoteJidAlt.replace('@s.whatsapp.net', '')
             : waMessage.key.remoteJid
           if (waMessage.key.fromMe) {
             const archiveWebhook = JSON.parse(ARCHIVE_WEBHOOK_CONFIG)
@@ -106,10 +110,12 @@ async function consumeMessages() {
                 'contextInfo' in waMessage.message.extendedTextMessage &&
                 'stanzaId' in waMessage.message.extendedTextMessage.contextInfo
               ) {
-                const { stanzaId, participant } =
+                const { stanzaId, participant, participantAlt } =
                   waMessage.message.extendedTextMessage.contextInfo
                 archiveMessage.context = {
-                  from: participant.replace('@s.whatsapp.net', ''),
+                  from: participant.endsWith('@s.whatsapp.net')
+                    ? participant.replace('@s.whatsapp.net', '')
+                    : participantAlt.replace('@s.whatsapp.net', ''),
                   message_id: stanzaId,
                 }
               }
@@ -125,10 +131,12 @@ async function consumeMessages() {
                 'contextInfo' in waMessage.message.locationMessage &&
                 'stanzaId' in waMessage.message.locationMessage.contextInfo
               ) {
-                const { stanzaId, participant } =
+                const { stanzaId, participant, participantAlt } =
                   waMessage.message.locationMessage.contextInfo
                 archiveMessage.context = {
-                  from: participant.replace('@s.whatsapp.net'),
+                  from: participant.endsWith('@s.whatsapp.net')
+                    ? participant.replace('@s.whatsapp.net', '')
+                    : participantAlt.replace('@s.whatsapp.net', ''),
                   message_id: stanzaId,
                 }
               }
@@ -156,10 +164,12 @@ async function consumeMessages() {
                 'contextInfo' in waMessage.message.contactMessage &&
                 'stanzaId' in waMessage.message.contactMessage.contextInfo
               ) {
-                const { stanzaId, participant } =
+                const { stanzaId, participant, participantAlt } =
                   waMessage.message.contactMessage.contextInfo
                 archiveMessage.context = {
-                  from: participant.replace('@s.whatsapp.net'),
+                  from: participant.endsWith('@s.whatsapp.net')
+                    ? participant.replace('@s.whatsapp.net', '')
+                    : participantAlt.replace('@s.whatsapp.net', ''),
                   message_id: stanzaId,
                 }
               }
@@ -178,10 +188,12 @@ async function consumeMessages() {
                 'contextInfo' in waMessage.message.imageMessage &&
                 'stanzaId' in waMessage.message.imageMessage.contextInfo
               ) {
-                const { stanzaId, participant } =
+                const { stanzaId, participant, participantAlt } =
                   waMessage.message.imageMessage.contextInfo
                 archiveMessage.context = {
-                  from: participant.replace('@s.whatsapp.net'),
+                  from: participant.endsWith('@s.whatsapp.net')
+                    ? participant.replace('@s.whatsapp.net', '')
+                    : participantAlt.replace('@s.whatsapp.net', ''),
                   message_id: stanzaId,
                 }
               }
@@ -200,10 +212,12 @@ async function consumeMessages() {
                 'contextInfo' in waMessage.message.videoMessage &&
                 'stanzaId' in waMessage.message.videoMessage.contextInfo
               ) {
-                const { stanzaId, participant } =
+                const { stanzaId, participant, participantAlt } =
                   waMessage.message.videoMessage.contextInfo
                 archiveMessage.context = {
-                  from: participant.replace('@s.whatsapp.net'),
+                  from: participant.endsWith('@s.whatsapp.net')
+                    ? participant.replace('@s.whatsapp.net', '')
+                    : participantAlt.replace('@s.whatsapp.net', ''),
                   message_id: stanzaId,
                 }
               }
@@ -234,10 +248,12 @@ async function consumeMessages() {
                 'stanzaId' in
                   waMessage.message.documentWithCaptionMessage.contextInfo
               ) {
-                const { stanzaId, participant } =
+                const { stanzaId, participant, participantAlt } =
                   waMessage.message.documentWithCaptionMessage.contextInfo
                 archiveMessage.context = {
-                  from: participant.replace('@s.whatsapp.net'),
+                  from: participant.endsWith('@s.whatsapp.net')
+                    ? participant.replace('@s.whatsapp.net', '')
+                    : participantAlt.replace('@s.whatsapp.net', ''),
                   message_id: stanzaId,
                 }
               }
@@ -257,8 +273,12 @@ async function consumeMessages() {
             wabaMessage.entry[0].changes[0].value.contacts[0]['participant'] = {
               name: waMessage.pushName,
               wa_id: waMessage.key.participant
-                ? waMessage.key.participant.replace('@s.whatsapp.net', '')
-                : waMessage.participant.replace('@s.whatsapp.net', ''),
+                ? waMessage.key.participant.endsWith('@s.whatsapp.net')
+                  ? waMessage.key.participant.replace('@s.whatsapp.net', '')
+                  : waMessage.key.participantAlt.replace('@s.whatsapp.net', '')
+                : waMessage.participant.endsWith('@s.whatsapp.net')
+                  ? waMessage.participant.replace('@s.whatsapp.net', '')
+                  : waMessage.participantAlt.replace('@s.whatsapp.net', ''),
             }
           } else {
             wabaMessage.entry[0].changes[0].value.contacts[0].profile.name =
@@ -283,10 +303,12 @@ async function consumeMessages() {
               'contextInfo' in waMessage.message.extendedTextMessage &&
               'stanzaId' in waMessage.message.extendedTextMessage.contextInfo
             ) {
-              const { stanzaId, participant } =
+              const { stanzaId, participant, participantAlt } =
                 waMessage.message.extendedTextMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.replace('@s.whatsapp.net'),
+                from: participant.endsWith('@s.whatsapp.net')
+                  ? participant.replace('@s.whatsapp.net', '')
+                  : participantAlt.replace('@s.whatsapp.net', ''),
                 id: stanzaId,
               }
             }
@@ -302,10 +324,12 @@ async function consumeMessages() {
               'contextInfo' in waMessage.message.locationMessage &&
               'stanzaId' in waMessage.message.locationMessage.contextInfo
             ) {
-              const { stanzaId, participant } =
+              const { stanzaId, participant, participantAlt } =
                 waMessage.message.locationMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.replace('@s.whatsapp.net'),
+                from: participant.endsWith('@s.whatsapp.net')
+                  ? participant.replace('@s.whatsapp.net', '')
+                  : participantAlt.replace('@s.whatsapp.net', ''),
                 id: stanzaId,
               }
             }
@@ -342,10 +366,12 @@ async function consumeMessages() {
               'contextInfo' in waMessage.message.contactMessage &&
               'stanzaId' in waMessage.message.contactMessage.contextInfo
             ) {
-              const { stanzaId, participant } =
+              const { stanzaId, participant, participantAlt } =
                 waMessage.message.contactMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.replace('@s.whatsapp.net'),
+                from: participant.endsWith('@s.whatsapp.net')
+                  ? participant.replace('@s.whatsapp.net', '')
+                  : participantAlt.replace('@s.whatsapp.net', ''),
                 id: stanzaId,
               }
             }
@@ -364,10 +390,12 @@ async function consumeMessages() {
               'contextInfo' in waMessage.message.imageMessage &&
               'stanzaId' in waMessage.message.imageMessage.contextInfo
             ) {
-              const { stanzaId, participant } =
+              const { stanzaId, participant, participantAlt } =
                 waMessage.message.imageMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.replace('@s.whatsapp.net'),
+                from: participant.endsWith('@s.whatsapp.net')
+                  ? participant.replace('@s.whatsapp.net', '')
+                  : participantAlt.replace('@s.whatsapp.net', ''),
                 id: stanzaId,
               }
             }
@@ -386,10 +414,12 @@ async function consumeMessages() {
               'contextInfo' in waMessage.message.videoMessage &&
               'stanzaId' in waMessage.message.videoMessage.contextInfo
             ) {
-              const { stanzaId, participant } =
+              const { stanzaId, participant, participantAlt } =
                 waMessage.message.videoMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.replace('@s.whatsapp.net'),
+                from: participant.endsWith('@s.whatsapp.net')
+                  ? participant.replace('@s.whatsapp.net', '')
+                  : participantAlt.replace('@s.whatsapp.net', ''),
                 id: stanzaId,
               }
             }
@@ -420,10 +450,12 @@ async function consumeMessages() {
               'stanzaId' in
                 waMessage.message.documentWithCaptionMessage.contextInfo
             ) {
-              const { stanzaId, participant } =
+              const { stanzaId, participant, participantAlt } =
                 waMessage.message.documentWithCaptionMessage.contextInfo
               wabaMessage.entry[0].changes[0].value.messages[0].context = {
-                from: participant.replace('@s.whatsapp.net'),
+                from: participant.endsWith('@s.whatsapp.net')
+                  ? participant.replace('@s.whatsapp.net', '')
+                  : participantAlt.replace('@s.whatsapp.net', ''),
                 id: stanzaId,
               }
             }
