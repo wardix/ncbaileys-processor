@@ -61,6 +61,9 @@ async function consumeMessages() {
           if (!('message' in waMessage)) {
             continue
           }
+          if (!waMessage.message) {
+            continue
+          }
           if (
             !('conversation' in waMessage.message) &&
             !('extendedTextMessage' in waMessage.message) &&
