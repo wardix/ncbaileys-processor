@@ -143,7 +143,7 @@ async function consumeMessages() {
                   phones: [
                     {
                       phone: cards.vCards[0].TEL[0].value,
-                      type: cards.vCards[0].TEL[0].parameters.TYPE[0],
+                      type: 'mobile',
                       wa_id: cards.vCards[0].TEL[0].parameters.x.WAID[0],
                     },
                   ],
@@ -311,6 +311,15 @@ async function consumeMessages() {
             const cards = parseVCards(
               waMessage.message.contactMessage.vcard,
             ) as any
+            let phone = ''
+            let waId = ''
+            if (cards.vCards[0].TEL) {
+              for (const tel of cards.vCards[0].TEL) {
+                if (!phone && tel.value) phone = tel.value
+                if (!waId && tel.parameters?.x?.WAID)
+                  waId = tel.parameters.x.WAID[0]
+              }
+            }
             wabaMessage.entry[0].changes[0].value.messages[0].contacts = [
               {
                 name: {
@@ -319,9 +328,9 @@ async function consumeMessages() {
                 },
                 phones: [
                   {
-                    phone: cards.vCards[0].TEL[0].value,
-                    type: cards.vCards[0].TEL[0].parameters.TYPE[0],
-                    wa_id: cards.vCards[0].TEL[0].parameters.x.WAID[0],
+                    phone,
+                    type: 'mobile',
+                    wa_id: waId,
                   },
                 ],
               },
