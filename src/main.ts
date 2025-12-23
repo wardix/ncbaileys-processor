@@ -449,6 +449,7 @@ async function consumeMessages() {
         )
         continue
       }
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay))
     }
   } catch (err) {
     console.error('Error during message consumtion: ', err)
@@ -460,7 +461,7 @@ async function postWithRetry<T = any>(
   data: any,
   config: AxiosRequestConfig = {},
   maxRetries = 16,
-  baseDelayMs = 256,
+  baseDelayMs = 512,
 ): Promise<AxiosResponse<T>> {
   let attempt = 0
   while (true) {
@@ -470,9 +471,7 @@ async function postWithRetry<T = any>(
       const status = err.response?.status
       if (status === 429 && attempt < maxRetries) {
         attempt++
-        // exponential backoff + jitter
-        const delay =
-          baseDelayMs * Math.pow(2, attempt) * (0.5 + Math.random() * 0.5)
+        const delay = baseDelayMs * Math.pow(2, attempt)
         console.warn(`429—retrying #${attempt} in ${Math.round(delay)}ms`)
         await new Promise((res) => setTimeout(res, delay))
         continue
