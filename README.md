@@ -11,6 +11,35 @@ Service ini menjembatani pesan WhatsApp dari Bailey's library ke dua destination
 
 Dirancang untuk menangani volume tinggi dengan retry otomatis, backoff eksponensial, dan deteksi cerdas untuk pesan grup vs. direct.
 
+## Integration dengan ncbaileys
+
+ncbaileyproc adalah downstream consumer dari [ncbaileys](https://github.com/nusanet/ncbaileys) library. Berikut adalah data flow lengkapnya:
+
+```
+WhatsApp Client
+       ↓
+   ncbaileys (Bailey's library)
+       ↓ (publish events)
+NATS JetStream
+  Stream: EVENTS
+  Topic: events.ncbaileys.{session}.messages_received
+       ↓ (subscribe & consume)
+ncbaileyproc (processor ini)
+       ├→ Process & validate
+       └→ Forward ke webhooks
+         • WABA Webhook (incoming messages)
+         • Archive Webhook (outgoing messages)
+```
+
+**Bagaimana cara kerjanya**:
+1. ncbaileys menangkap pesan WhatsApp (incoming/outgoing) dan mempublikasikannya ke NATS JetStream
+2. ncbaileyproc memiliki durable consumer `ncbaileys_processor` yang subscribe ke topic `events.ncbaileys.>`
+3. Pesan di-consume satu per satu, divalidasi, dan dikonversi ke format WABA atau Archive
+4. Setiap pesan yang berhasil diproses di-forward ke destination webhook (berdasarkan konfigurasi account)
+
+**Payload Message**:
+Detail lengkap tentang struktur message payload yang dipublikasikan ncbaileys tersedia di [ncbaileys README — section "Event Stream (NATS)"](../ncbaileys/README.md#event-stream-nats).
+
 ## Fitur
 
 - ✅ Konsumsi pesan dari NATS JetStream dengan durable consumer
@@ -145,22 +174,34 @@ bun dist/main.js
 ## Message Flow
 
 ```
-1. NATS Consumer → Fetch 1 pesan (timeout 1000ms)
+ncbaileys publishes ke NATS topic: events.ncbaileys.{session}.messages_received
+                ↓
+ncbaileyproc consumer (durable: ncbaileys_processor, filter: events.ncbaileys.>)
+                ↓
+1. Fetch 1 pesan dari NATS (timeout 1000ms)
    ↓
-2. Filter → Skip if fromMe+PENDING, status broadcast, atau malformed
+2. Filter → Skip if:
+   • fromMe + PENDING status (belum terkirim)
+   • status@broadcast (status updates)
+   • Malformed (missing 'message' field atau null)
    ↓
 3. Parse → Ekstrak tipe pesan (text, location, contact, media)
    ↓
 4. Detect Group → Cek remoteJid ends with @g.us
    ↓
-5. Route:
-   • Outgoing (fromMe) → ARCHIVE_WEBHOOK
-   • Incoming → WABA_WEBHOOK
+5. Convert → Transform ke format WABA atau Archive
    ↓
-6. Retry → Exponential backoff if HTTP 429
+6. Route:
+   • Outgoing (fromMe) → ARCHIVE_WEBHOOK (jika configured)
+   • Incoming → WABA_WEBHOOK (semua incoming)
    ↓
-7. Ack → Acknowledge message ke NATS
+7. Send → POST ke webhook dengan signature (WABA only)
+        Retry dengan exponential backoff if HTTP 429
+   ↓
+8. Ack → Acknowledge message ke NATS JetStream
 ```
+
+**Catatan**: Message payload yang diterima dari NATS berasal dari ncbaileys format. Struktur lengkapnya dijelaskan di ncbaileys README section "Event Stream (NATS)".
 
 ## Tipe Pesan yang Didukung
 
