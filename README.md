@@ -309,7 +309,3 @@ Lihat [CLAUDE.md](./CLAUDE.md) untuk detail architecture dan common tasks.
 ## License
 
 Private — PT Nusa Indonesia
-
----
-
-**Questions?** Contact: david@nusa.id
