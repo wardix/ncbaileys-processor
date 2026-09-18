@@ -13,7 +13,7 @@ Dirancang untuk menangani volume tinggi dengan retry otomatis, backoff eksponens
 
 ## Integration dengan ncbaileys
 
-ncbaileyproc adalah downstream consumer dari [ncbaileys](https://github.com/nusanet/ncbaileys) library. Berikut adalah data flow lengkapnya:
+ncbaileyproc adalah downstream consumer dari [ncbaileys](https://github.com/wardix/ncbaileys) library. Berikut adalah data flow lengkapnya:
 
 ```
 WhatsApp Client
@@ -38,7 +38,7 @@ ncbaileyproc (processor ini)
 4. Setiap pesan yang berhasil diproses di-forward ke destination webhook (berdasarkan konfigurasi account)
 
 **Payload Message**:
-Detail lengkap tentang struktur message payload yang dipublikasikan ncbaileys tersedia di [ncbaileys README — section "Event Stream (NATS)"](../ncbaileys/README.md#event-stream-nats).
+Detail lengkap tentang struktur message payload yang dipublikasikan ncbaileys tersedia di [ncbaileys README — section "Event Stream (NATS)"](https://github.com/wardix/ncbaileys#event-stream-nats).
 
 ## Fitur
 
