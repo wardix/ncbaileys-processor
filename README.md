@@ -308,4 +308,4 @@ Lihat [CLAUDE.md](./CLAUDE.md) untuk detail architecture dan common tasks.
 
 ## License
 
-Private — PT Nusa Indonesia
+ISC
