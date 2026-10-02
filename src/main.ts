@@ -15,6 +15,27 @@ import {
 
 const sc = StringCodec()
 
+function getEditedMessage(
+  message: any,
+): { messageId: string; body: string } | null {
+  const protocolMessage =
+    message.protocolMessage ?? message.editedMessage?.message?.protocolMessage
+  if (
+    !protocolMessage ||
+    (protocolMessage.type !== 'MESSAGE_EDIT' && protocolMessage.type !== 14)
+  ) {
+    return null
+  }
+  // only text edits: the webhook receiver replaces the whole message content,
+  // so a caption-only edit would drop the original media
+  const edited = protocolMessage.editedMessage ?? {}
+  const body = edited.conversation ?? edited.extendedTextMessage?.text
+  if (!protocolMessage.key?.id || body === undefined) {
+    return null
+  }
+  return { messageId: protocolMessage.key.id, body }
+}
+
 async function consumeMessages() {
   let backoffDelay = Number(MIN_BACKOFF_DELAY_SECONDS) * 1000
 
@@ -65,8 +86,10 @@ async function consumeMessages() {
           console.log(JSON.stringify(waMessage, null, 2))
 
           const isGroupConversation = waMessage.key.remoteJid.endsWith('@g.us')
+          const editedMessage = getEditedMessage(waMessage.message)
 
           if (
+            !editedMessage &&
             !('conversation' in waMessage.message) &&
             !('extendedTextMessage' in waMessage.message) &&
             !('locationMessage' in waMessage.message) &&
@@ -94,7 +117,16 @@ async function consumeMessages() {
             const { url, params, headers } = archiveWebhook[account]
             headers['Content-Type'] = 'application/json'
 
-            if ('conversation' in waMessage.message) {
+            if (editedMessage) {
+              archiveMessage.type = 'edit'
+              archiveMessage.edit = {
+                original_message_id: editedMessage.messageId,
+                message: {
+                  type: 'text',
+                  text: { body: editedMessage.body },
+                },
+              }
+            } else if ('conversation' in waMessage.message) {
               archiveMessage.type = 'text'
               archiveMessage.text = {
                 preview_url: false,
@@ -289,7 +321,16 @@ async function consumeMessages() {
           wabaMessage.entry[0].changes[0].value.messages[0].id =
             waMessage.key.id
           wabaMessage.entry[0].changes[0].value.messages[0].timestamp = `${waMessage.messageTimestamp}`
-          if ('conversation' in waMessage.message) {
+          if (editedMessage) {
+            wabaMessage.entry[0].changes[0].value.messages[0].type = 'edit'
+            wabaMessage.entry[0].changes[0].value.messages[0].edit = {
+              original_message_id: editedMessage.messageId,
+              message: {
+                type: 'text',
+                text: { body: editedMessage.body },
+              },
+            }
+          } else if ('conversation' in waMessage.message) {
             wabaMessage.entry[0].changes[0].value.messages[0].type = 'text'
             wabaMessage.entry[0].changes[0].value.messages[0].text = {
               body: waMessage.message.conversation,
